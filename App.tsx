@@ -9,14 +9,14 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-// DUMMY DATA (SIMPLE ARRAYS & VARIABLES)
+// DUMMY DATA
 const studentData = {
-  name: 'Ali Khan',
-  rollNo: '21K-3210',
-  department: 'BS Computer Science',
+  name: 'Qasim',
+  rollNo: '23i-3044',
+  department: 'BS Software Engineering',
   semester: '7th Semester',
-  cgpa: '3.45',
-  sgpa: '3.60',
+  cgpa: '2.5',
+  sgpa: '0.00',
 };
 
 const initialAttendance = [
@@ -30,7 +30,7 @@ const initialAttendance = [
       { date: '15 Sep', status: 'Absent' },
       { date: '17 Sep', status: 'Absent' },
       { date: '22 Sep', status: 'Absent' },
-      { date: '24 Sep', status: 'Absent' }, // 7 absents -> Debarred (> 6 leaves)
+      { date: '24 Sep', status: 'Absent' }, // 7 absents: Debarred (> 6 leaves)
     ],
   },
   {
@@ -137,13 +137,12 @@ const transcriptData = [
 ];
 
 const feeData = {
-  challanNo: 'CHL-99881',
+  challanNo: 'ISL-99881',
   dueDate: '25 October 2024',
   status: 'PAID',
   items: [
-    { title: 'Tuition Fee', amount: 80000 },
-    { title: 'Lab Charges', amount: 8000 },
-    { title: 'Exam Fee', amount: 4000 },
+    { title: 'Tuition Fee', amount: 180000 },
+    { title: 'Semester Activities', amount: 2500 },
   ],
   totalAmount: 92000,
 };
@@ -180,8 +179,8 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
 
   // Login credentials state
-  const [rollNo, setRollNo] = useState('21K-3210');
-  const [password, setPassword] = useState('12345');
+  const [rollNo, setRollNo] = useState('');
+  const [password, setPassword] = useState('');
 
   // Attendance state
   const [attendance, setAttendance] = useState(initialAttendance);
@@ -290,7 +289,6 @@ export default function App() {
             <TextInput
               value={rollNo}
               onChangeText={setRollNo}
-              placeholder="Roll Number"
             />
 
             <Text>Password:</Text>
@@ -298,12 +296,7 @@ export default function App() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder="Password"
             />
-
-            <Text>
-              (Login details available: Roll No: {rollNo}, Password: {password})
-            </Text>
 
             <Button title="Sign In" onPress={handleLogin} />
           </ScrollView>
