@@ -7,8 +7,12 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+  Dimensions,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { PieChart, BarChart, ProgressChart } from 'react-native-chart-kit';
 
 // DUMMY DATA
 const studentData = {
@@ -154,7 +158,7 @@ const feeData = {
 const initialFeedback = [
   {
     course: 'Software Mobile Development',
-    instructor: 'Engr. Sarah Khan',
+    instructor: 'Junaid Ali',
     teacherFeedback: 'Students should practice React Native state management and flexbox layouts.',
     studentReviews: [
       { comment: 'Very practical course, labs are very helpful.', rating: 5 },
@@ -163,7 +167,7 @@ const initialFeedback = [
   },
   {
     course: 'Information Security',
-    instructor: 'Dr. Farhan Ali',
+    instructor: 'Zaheer Sani',
     teacherFeedback: 'Make sure to understand encryption algorithms and network defense tools.',
     studentReviews: [
       { comment: 'Lectures are very well explained.', rating: 5 },
@@ -172,7 +176,7 @@ const initialFeedback = [
   },
   {
     course: 'Parallel and Distributed Computing',
-    instructor: 'Prof. Tariq Jamil',
+    instructor: 'Zaheer Sani',
     teacherFeedback: 'Work on thread synchronization and message passing interface.',
     studentReviews: [
       { comment: 'Tough course, but very interesting topics.', rating: 4 },
@@ -180,7 +184,7 @@ const initialFeedback = [
   },
   {
     course: 'Game Dev',
-    instructor: 'Sir Usman',
+    instructor: 'Dr, Bilal Khalid Dar',
     teacherFeedback: 'Focus on 3D physics engines, game loops, and shader basics.',
     studentReviews: [
       { comment: 'Super engaging course! Final project was a playable 3D game.', rating: 5 },
@@ -189,7 +193,7 @@ const initialFeedback = [
   },
   {
     course: 'NLP',
-    instructor: 'Dr. Asim',
+    instructor: 'Dr. Asif',
     teacherFeedback: 'Review transformers and word tokenization before the midterm examination.',
     studentReviews: [
       { comment: 'Great depth of machine learning concepts.', rating: 5 },
@@ -198,7 +202,7 @@ const initialFeedback = [
   },
   {
     course: 'Gen AI',
-    instructor: 'Dr. Zeeshan',
+    instructor: 'Dr. Shehla',
     teacherFeedback: 'Explore diffusion models, prompt engineering, and LLM fine-tuning techniques.',
     studentReviews: [
       { comment: 'Cutting edge content, very relevant to current industry demands.', rating: 5 },
@@ -246,10 +250,26 @@ export default function App() {
   // Fee status
   const [feeStatus, setFeeStatus] = useState(feeData.status);
 
+  // Selected course index for dashboard marks pie chart
+  const [dashboardMarksIndex, setDashboardMarksIndex] = useState(0);
+
   // Feedback state
   const [feedback, setFeedback] = useState(initialFeedback);
   const [feedbackCourseIndex, setFeedbackCourseIndex] = useState(0);
   const [newReviewText, setNewReviewText] = useState('');
+
+  // Helper to extract numerical obtained marks out of 100
+  const getObtainedMarksOutOf100 = (totalStr: string) => {
+    if (totalStr && totalStr.includes('/')) {
+      const parts = totalStr.split('/');
+      const obt = parseFloat(parts[0].trim());
+      const tot = parseFloat(parts[1].trim());
+      if (!isNaN(obt) && !isNaN(tot) && tot > 0) {
+        return Math.round((obt / tot) * 100);
+      }
+    }
+    return 85;
+  };
 
   // Login handler
   const handleLogin = () => {
@@ -300,8 +320,16 @@ export default function App() {
     setAttendance(updated);
   };
 
-  // Add anonymous student review (no name mentioned)
+  // Add anonymous student review (no name mentioned) - only for registered courses
   const addStudentReview = () => {
+    const activeItem = feedback[feedbackCourseIndex];
+    if (!registered.includes(activeItem.course)) {
+      Alert.alert(
+        'Not Registered',
+        'You can only submit reviews for courses you are currently registered for.'
+      );
+      return;
+    }
     if (!newReviewText.trim()) {
       Alert.alert('Error', 'Please enter your review text');
       return;
@@ -338,141 +366,291 @@ export default function App() {
   // 1. LOGIN SCREEN
   if (currentScreen === 'login') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.card}>
-              <Text style={styles.headerTitle}>STUDENT PORTAL LOGIN</Text>
-              <Text style={styles.subText}>Sign in with your roll number and password</Text>
+      <SafeAreaView style={styles.mainContainer}>
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.card}>
+            <Text style={styles.headerTitle}>STUDENT PORTAL LOGIN</Text>
+            <Text style={styles.subText}>Sign in with your roll number and password</Text>
 
-              <Text style={styles.fieldLabel}>Roll Number:</Text>
-              <TextInput
-                style={styles.inputBox}
-                value={rollNo}
-                onChangeText={setRollNo}
-                placeholder="e.g. 23i-3044"
-              />
+            <Text style={styles.fieldLabel}>Roll Number:</Text>
+            <TextInput
+              style={styles.inputBox}
+              value={rollNo}
+              onChangeText={setRollNo}
+              placeholder="e.g. 23i-1234"
+            />
 
-              <Text style={styles.fieldLabel}>Password:</Text>
-              <TextInput
-                style={styles.inputBox}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="Enter password"
-              />
+            <Text style={styles.fieldLabel}>Password:</Text>
+            <TextInput
+              style={styles.inputBox}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              placeholder="Enter password"
+            />
 
-              <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                <Text style={styles.primaryButtonText}>Sign In</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+              <Text style={styles.primaryButtonText}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 2. MAIN MENU
   if (currentScreen === 'menu') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.headerBanner}>
-              <Text style={styles.headerTitle}>STUDENT PORTAL MAIN MENU</Text>
-              <Text style={styles.welcomeText}>
-                Welcome: {studentData.name} ({studentData.rollNo})
-              </Text>
-              <Text style={styles.subText}>{studentData.department} • {studentData.semester}</Text>
-            </View>
+      <SafeAreaView style={styles.mainContainer}>
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.headerBanner}>
+            <Text style={styles.headerTitle}>STUDENT PORTAL MAIN MENU</Text>
+            <Text style={styles.welcomeText}>
+              Welcome: {studentData.name} ({studentData.rollNo})
+            </Text>
+            <Text style={styles.subText}>{studentData.department} • {studentData.semester}</Text>
+          </View>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('dashboard')}
-            >
-              <Text style={styles.menuCardBtnText}>1. Student Academic Dashboard</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('dashboard')}
+          >
+            <Text style={styles.menuCardBtnText}>1. Student Academic Dashboard</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('attendance')}
-            >
-              <Text style={styles.menuCardBtnText}>2. Attendance Monitoring & Alerts</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('attendance')}
+          >
+            <Text style={styles.menuCardBtnText}>2. Attendance Monitoring & Alerts</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('registration')}
-            >
-              <Text style={styles.menuCardBtnText}>3. Course Registration</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('registration')}
+          >
+            <Text style={styles.menuCardBtnText}>3. Course Registration</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('marks')}
-            >
-              <Text style={styles.menuCardBtnText}>4. View Course Wise Marks</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('marks')}
+          >
+            <Text style={styles.menuCardBtnText}>4. View Course Wise Marks</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('transcript')}
-            >
-              <Text style={styles.menuCardBtnText}>5. Transcript</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('transcript')}
+          >
+            <Text style={styles.menuCardBtnText}>5. Transcript</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('fee')}
-            >
-              <Text style={styles.menuCardBtnText}>6. Fee Challan / Details</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('fee')}
+          >
+            <Text style={styles.menuCardBtnText}>6. Fee Challan / Details</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuCardBtn}
-              onPress={() => setCurrentScreen('feedback')}
-            >
-              <Text style={styles.menuCardBtnText}>7. Student / Course Feedback</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuCardBtn}
+            onPress={() => setCurrentScreen('feedback')}
+          >
+            <Text style={styles.menuCardBtnText}>7. Student / Course Feedback</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.dangerButton}
-              onPress={() => setCurrentScreen('login')}
-            >
-              <Text style={styles.dangerButtonText}>Sign Out</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+          <TouchableOpacity
+            style={styles.dangerButton}
+            onPress={() => setCurrentScreen('login')}
+          >
+            <Text style={styles.dangerButtonText}>Sign Out</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 3. STUDENT ACADEMIC DASHBOARD
   if (currentScreen === 'dashboard') {
-    return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Academic Dashboard')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Student Details</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Name: </Text>{studentData.name}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Roll Number: </Text>{studentData.rollNo}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Department: </Text>{studentData.department}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Current Semester: </Text>{studentData.semester}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>CGPA: </Text>{studentData.cgpa}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Semester GPA: </Text>{studentData.sgpa}</Text>
-            </View>
+    const screenWidth = Dimensions.get('window').width;
+    const chartWidth = Math.max(280, screenWidth - 64);
 
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Registered Courses ({registered.length})</Text>
-              {registered.map((item, index) => (
-                <Text key={index} style={styles.listItem}>• {item}</Text>
+    // Active course marks for Pie Chart (Out of 100)
+    const activeMarksItem = marksData[dashboardMarksIndex] || marksData[0];
+    const obtMarks = getObtainedMarksOutOf100(activeMarksItem.total);
+    const remMarks = Math.max(0, 100 - obtMarks);
+
+    const marksPieData = [
+      {
+        name: 'Obtained',
+        marks: obtMarks,
+        color: '#16A34A',
+        legendFontColor: '#1E293B',
+        legendFontSize: 13,
+      },
+      {
+        name: 'Remaining',
+        marks: remMarks,
+        color: '#CBD5E1',
+        legendFontColor: '#64748B',
+        legendFontSize: 13,
+      },
+    ];
+
+    // Attendance Bar Chart data
+    const attendanceLabels = attendance.map(a => {
+      if (a.courseName.includes('Mobile')) return 'SMD';
+      if (a.courseName.includes('Security')) return 'InfoSec';
+      if (a.courseName.includes('Parallel')) return 'PDC';
+      return a.courseName.substring(0, 6);
+    });
+
+    const attendancePercentages = attendance.map(a => {
+      const total = a.records.length;
+      if (total === 0) return 100;
+      const presents = a.records.filter((r) => r.status === 'Present').length;
+      return Math.round((presents / total) * 100);
+    });
+
+    const attendanceBarData = {
+      labels: attendanceLabels,
+      datasets: [{ data: attendancePercentages }],
+    };
+
+    const attendanceProgressData = {
+      labels: attendanceLabels,
+      data: attendancePercentages.map(p => Math.min(1, Math.max(0, p / 100))),
+    };
+
+    const baseChartConfig = {
+      backgroundGradientFrom: '#FFFFFF',
+      backgroundGradientTo: '#FFFFFF',
+      color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+      decimalPlaces: 0,
+    };
+
+    return (
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Academic Dashboard')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          {/* 1. Student Academic Details */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Student Details</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Name: </Text>{studentData.name}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Roll Number: </Text>{studentData.rollNo}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Department: </Text>{studentData.department}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Current Semester: </Text>{studentData.semester}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>CGPA: </Text>{studentData.cgpa}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Semester GPA: </Text>{studentData.sgpa}</Text>
+          </View>
+
+          {/* 2. Registered Courses */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Registered Courses ({registered.length})</Text>
+            {registered.map((item, index) => (
+              <Text key={index} style={styles.listItem}>• {item}</Text>
+            ))}
+          </View>
+
+          {/* 3. CHART 1: Course Marks Pie Chart (Out of 100) */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Course Marks (Pie Chart - Out of 100)</Text>
+            <Text style={styles.subText}>Select course to view marks breakdown:</Text>
+            <View style={[styles.tabsRow, { marginTop: 8 }]}>
+              {marksData.map((m, mIdx) => (
+                <TouchableOpacity
+                  key={mIdx}
+                  style={dashboardMarksIndex === mIdx ? styles.tabActive : styles.tabInactive}
+                  onPress={() => setDashboardMarksIndex(mIdx)}
+                >
+                  <Text style={dashboardMarksIndex === mIdx ? styles.tabActiveText : styles.tabInactiveText}>
+                    {m.course.includes('Mobile') ? 'SMD' : m.course.includes('Security') ? 'InfoSec' : m.course.includes('Parallel') ? 'PDC' : 'FYP'}
+                  </Text>
+                </TouchableOpacity>
               ))}
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+
+            <PieChart
+              data={marksPieData}
+              width={chartWidth}
+              height={180}
+              chartConfig={baseChartConfig}
+              accessor="marks"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute={true}
+            />
+
+            <View style={styles.chartLegendSummary}>
+              <Text style={styles.chartSummaryText}>
+                Course: <Text style={styles.boldLabel}>{activeMarksItem.course}</Text>
+              </Text>
+              <Text style={styles.chartSummaryText}>
+                Score: <Text style={{ color: '#16A34A', fontWeight: 'bold' }}>{obtMarks} / 100 Marks</Text> (Grade: {activeMarksItem.grade})
+              </Text>
+              <Text style={styles.chartSummarySub}>
+                Quizzes: {activeMarksItem.quizzes} • Assignments: {activeMarksItem.assignments} • Midterm: {activeMarksItem.midterm} • Final: {activeMarksItem.finalExam}
+              </Text>
+            </View>
+          </View>
+
+          {/* 4. CHART 2: Course Attendance Bar Chart */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Course Attendance (Bar Chart - %)</Text>
+            <Text style={styles.subText}>Current semester attendance per registered course:</Text>
+            <BarChart
+              data={attendanceBarData}
+              width={chartWidth}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix="%"
+              fromZero={true}
+              showValuesOnTopOfBars={true}
+              chartConfig={{
+                backgroundColor: '#FFFFFF',
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: '#FFFFFF',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+                barPercentage: 0.6,
+              }}
+              style={{
+                borderRadius: 8,
+                marginVertical: 8,
+              }}
+            />
+            <Text style={styles.chartSummarySub}>
+              Note: Minimum 75% attendance required to sit in final exams.
+            </Text>
+          </View>
+
+          {/* 5. CHART 3: Attendance Progress Rings */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Attendance Progress (Rings)</Text>
+            <ProgressChart
+              data={attendanceProgressData}
+              width={chartWidth}
+              height={180}
+              strokeWidth={12}
+              radius={24}
+              chartConfig={{
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: '#FFFFFF',
+                color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+              }}
+              hideLegend={false}
+              style={{
+                borderRadius: 8,
+                marginVertical: 4,
+              }}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -487,186 +665,220 @@ export default function App() {
     const isDebarred = absents > 6;
 
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Attendance Monitoring')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <Text style={styles.sectionLabel}>Select Course to View Attendance:</Text>
-            <View style={styles.tabsRow}>
-              {attendance.map((c, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={selectedCourseIndex === i ? styles.tabActive : styles.tabInactive}
-                  onPress={() => setSelectedCourseIndex(i)}
-                >
-                  <Text style={selectedCourseIndex === i ? styles.tabActiveText : styles.tabInactiveText}>
-                    {c.courseName}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Attendance Monitoring')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <Text style={styles.sectionLabel}>Select Course to View Attendance:</Text>
+          <View style={styles.tabsRow}>
+            {attendance.map((c, i) => (
+              <TouchableOpacity
+                key={i}
+                style={selectedCourseIndex === i ? styles.tabActive : styles.tabInactive}
+                onPress={() => setSelectedCourseIndex(i)}
+              >
+                <Text style={selectedCourseIndex === i ? styles.tabActiveText : styles.tabInactiveText}>
+                  {c.courseName}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>{activeCourse.courseName}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Total Classes: </Text>{totalClasses}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Present: </Text>{presents}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Absent: </Text>{absents}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Attendance: </Text>{percentage}%</Text>
-            </View>
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>{activeCourse.courseName}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Total Classes: </Text>{totalClasses}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Present: </Text>{presents}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Absent: </Text>{absents}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Attendance: </Text>{percentage}%</Text>
+          </View>
 
-            {/* Notification of leaves / Debarred */}
-            {isDebarred ? (
-              <View style={styles.debarredAlert}>
-                <Text style={styles.debarredAlertText}>
-                  ALERT: DEBARRED! You have {absents} absents (more than 6 leaves). You are debarred from the exam!
+          {/* Notification of leaves / Debarred */}
+          {isDebarred ? (
+            <View style={styles.debarredAlert}>
+              <Text style={styles.debarredAlertText}>
+                ALERT: DEBARRED! You have {absents} absents (more than 6 leaves). You are debarred from the exam!
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.noticeAlert}>
+              <Text style={styles.noticeAlertText}>
+                Notification: You have used {absents} out of 6 leaves. You have {leavesLeft} leaves remaining.
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.greenBtn}
+              onPress={() => addAttendanceRecord('Present')}
+            >
+              <Text style={styles.btnTextWhite}>+ Add Present Class</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.redBtn}
+              onPress={() => addAttendanceRecord('Absent')}
+            >
+              <Text style={styles.btnTextWhite}>+ Add Absent Class</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Class Dates & History</Text>
+            {activeCourse.records.map((r, idx) => (
+              <View key={idx} style={styles.historyRow}>
+                <Text style={styles.historyText}>Class #{idx + 1} ({r.date})</Text>
+                <Text style={r.status === 'Present' ? styles.statusPresent : styles.statusAbsent}>
+                  {r.status}
                 </Text>
               </View>
-            ) : (
-              <View style={styles.noticeAlert}>
-                <Text style={styles.noticeAlertText}>
-                  Notification: You have used {absents} out of 6 leaves. You have {leavesLeft} leaves remaining.
-                </Text>
-              </View>
-            )}
+            ))}
+          </View>
 
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.greenBtn}
-                onPress={() => addAttendanceRecord('Present')}
-              >
-                <Text style={styles.btnTextWhite}>+ Add Present Class</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.redBtn}
-                onPress={() => addAttendanceRecord('Absent')}
-              >
-                <Text style={styles.btnTextWhite}>+ Add Absent Class</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Class Dates & History</Text>
-              {activeCourse.records.map((r, idx) => (
-                <View key={idx} style={styles.historyRow}>
-                  <Text style={styles.historyText}>Class #{idx + 1} ({r.date})</Text>
-                  <Text style={r.status === 'Present' ? styles.statusPresent : styles.statusAbsent}>
-                    {r.status}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+          {/* Visual Attendance Bar Chart */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Course Attendance Overview (Bar Chart)</Text>
+            <BarChart
+              data={{
+                labels: attendance.map(a =>
+                  a.courseName.includes('Mobile') ? 'SMD' : a.courseName.includes('Security') ? 'InfoSec' : 'PDC'
+                ),
+                datasets: [
+                  {
+                    data: attendance.map(a => {
+                      const tot = a.records.length;
+                      if (tot === 0) return 100;
+                      const pres = a.records.filter((r) => r.status === 'Present').length;
+                      return Math.round((pres / tot) * 100);
+                    }),
+                  },
+                ],
+              }}
+              width={Math.max(280, Dimensions.get('window').width - 64)}
+              height={200}
+              yAxisLabel=""
+              yAxisSuffix="%"
+              fromZero={true}
+              showValuesOnTopOfBars={true}
+              chartConfig={{
+                backgroundColor: '#FFFFFF',
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: '#FFFFFF',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+                barPercentage: 0.6,
+              }}
+              style={{ borderRadius: 8, marginVertical: 6 }}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 5. COURSE REGISTRATION (WITH TEACHER REVIEWS)
   if (currentScreen === 'registration') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Course Registration')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.rulesCard}>
-              <Text style={styles.rulesTitle}>Course Registration Rules:</Text>
-              <Text style={styles.ruleItem}>• Mobile Dev OR Game Dev: Choose 1 out of 2.</Text>
-              <Text style={styles.ruleItem}>• NLP OR Gen AI: Choose 1 out of 2.</Text>
-              <Text style={styles.ruleItem}>• Core courses are mandatory.</Text>
-            </View>
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Course Registration')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.rulesCard}>
+            <Text style={styles.rulesTitle}>Course Registration Rules:</Text>
+            <Text style={styles.ruleItem}>• Mobile Dev OR Game Dev: Choose 1 out of 2.</Text>
+            <Text style={styles.ruleItem}>• NLP OR Gen AI: Choose 1 out of 2.</Text>
+            <Text style={styles.ruleItem}>• Core courses are mandatory.</Text>
+          </View>
 
-            <Text style={styles.sectionLabel}>Available Courses (7 Courses):</Text>
-            {courseList.map((c) => {
-              const isSelected = registered.includes(c.name);
-              const courseFeedbackItem = feedback.find((f) => f.course === c.name);
-              const isReviewsExpanded = expandedRegReview === c.id;
+          <Text style={styles.sectionLabel}>Available Courses (7 Courses):</Text>
+          {courseList.map((c) => {
+            const isSelected = registered.includes(c.name);
+            const courseFeedbackItem = feedback.find((f) => f.course === c.name);
+            const isReviewsExpanded = expandedRegReview === c.id;
 
-              return (
-                <View key={c.id} style={isSelected ? styles.courseCardSelected : styles.courseCard}>
-                  <View style={styles.courseHeaderRow}>
-                    <View style={styles.courseTitleCol}>
-                      <Text style={styles.courseNameText}>{c.name}</Text>
-                      <Text style={styles.courseTypeBadge}>
-                        {c.type === 'core'
-                          ? 'Core'
-                          : c.type === 'elective1'
-                            ? 'Elective 1 (Choose 1)'
-                            : 'Elective 2 (Choose 1)'}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={isSelected ? styles.removeBtn : styles.selectBtn}
-                      onPress={() => toggleCourse(c)}
-                    >
-                      <Text style={styles.btnTextWhite}>
-                        {isSelected ? 'Remove' : 'Select'}
-                      </Text>
-                    </TouchableOpacity>
+            return (
+              <View key={c.id} style={isSelected ? styles.courseCardSelected : styles.courseCard}>
+                <View style={styles.courseHeaderRow}>
+                  <View style={styles.courseTitleCol}>
+                    <Text style={styles.courseNameText}>{c.name}</Text>
+                    <Text style={styles.courseTypeBadge}>
+                      {c.type === 'core'
+                        ? 'Core'
+                        : c.type === 'elective1'
+                          ? 'Elective 1 (Choose 1)'
+                          : 'Elective 2 (Choose 1)'}
+                    </Text>
                   </View>
-
-                  {/* Button to view teacher feedback and anonymous student reviews during registration */}
                   <TouchableOpacity
-                    style={styles.reviewToggleBtn}
-                    onPress={() =>
-                      setExpandedRegReview(isReviewsExpanded ? null : c.id)
-                    }
+                    style={isSelected ? styles.removeBtn : styles.selectBtn}
+                    onPress={() => toggleCourse(c)}
                   >
-                    <Text style={styles.reviewToggleText}>
-                      {isReviewsExpanded
-                        ? '▲ Hide Teacher & Student Reviews'
-                        : '▼ View Teacher & Student Reviews'}
+                    <Text style={styles.btnTextWhite}>
+                      {isSelected ? 'Remove' : 'Select'}
                     </Text>
                   </TouchableOpacity>
-
-                  {/* Expanded Teacher and Anonymous Student Reviews */}
-                  {isReviewsExpanded && (
-                    <View style={styles.reviewsDetailBox}>
-                      <Text style={styles.reviewSubHeader}>
-                        Instructor: {courseFeedbackItem ? courseFeedbackItem.instructor : 'Course Faculty'}
-                      </Text>
-
-                      <Text style={styles.boldLabel}>Teacher's Feedback/Remarks:</Text>
-                      <Text style={styles.feedbackQuote}>
-                        "{courseFeedbackItem ? courseFeedbackItem.teacherFeedback : 'Work hard and stay consistent with course materials.'}"
-                      </Text>
-
-                      <Text style={[styles.boldLabel, styles.topSpacing]}>
-                        Student Reviews (Anonymous - No Names):
-                      </Text>
-                      {courseFeedbackItem && courseFeedbackItem.studentReviews.length > 0 ? (
-                        courseFeedbackItem.studentReviews.map((rev, rIndex) => (
-                          <View key={rIndex} style={styles.reviewRow}>
-                            <Text style={styles.anonymousAuthor}>
-                              • Anonymous Student ({rev.rating}/5 stars):
-                            </Text>
-                            <Text style={styles.reviewBodyText}>"{rev.comment}"</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={styles.subText}>No student reviews yet.</Text>
-                      )}
-                    </View>
-                  )}
                 </View>
-              );
-            })}
 
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() =>
-                Alert.alert(
-                  'Registration Confirmed',
-                  `You are registered in ${registered.length} courses:\n\n${registered.join('\n')}`
-                )
-              }
-            >
-              <Text style={styles.primaryButtonText}>
-                Confirm Registration ({registered.length} Selected)
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+                {/* Button to view teacher feedback and anonymous student reviews during registration */}
+                <TouchableOpacity
+                  style={styles.reviewToggleBtn}
+                  onPress={() =>
+                    setExpandedRegReview(isReviewsExpanded ? null : c.id)
+                  }
+                >
+                  <Text style={styles.reviewToggleText}>
+                    {isReviewsExpanded
+                      ? '▲ Hide Teacher & Student Reviews'
+                      : '▼ View Teacher & Student Reviews'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Expanded Teacher and Anonymous Student Reviews */}
+                {isReviewsExpanded && (
+                  <View style={styles.reviewsDetailBox}>
+                    <Text style={styles.reviewSubHeader}>
+                      Instructor: {courseFeedbackItem ? courseFeedbackItem.instructor : 'Course Faculty'}
+                    </Text>
+
+                    <Text style={styles.boldLabel}>Teacher's Feedback/Remarks:</Text>
+                    <Text style={styles.feedbackQuote}>
+                      "{courseFeedbackItem ? courseFeedbackItem.teacherFeedback : 'Work hard and stay consistent with course materials.'}"
+                    </Text>
+
+                    <Text style={[styles.boldLabel, styles.topSpacing]}>
+                      Student Reviews (Anonymous - No Names):
+                    </Text>
+                    {courseFeedbackItem && courseFeedbackItem.studentReviews.length > 0 ? (
+                      courseFeedbackItem.studentReviews.map((rev, rIndex) => (
+                        <View key={rIndex} style={styles.reviewRow}>
+                          <Text style={styles.anonymousAuthor}>
+                            • Anonymous Student ({rev.rating}/5 stars):
+                          </Text>
+                          <Text style={styles.reviewBodyText}>"{rev.comment}"</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.subText}>No student reviews yet.</Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() =>
+              Alert.alert(
+                'Registration Confirmed',
+                `You are registered in ${registered.length} courses:\n\n${registered.join('\n')}`
+              )
+            }
+          >
+            <Text style={styles.primaryButtonText}>
+              Confirm Registration ({registered.length} Selected)
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -675,222 +887,300 @@ export default function App() {
     const activeCourseMarks = marksData[selectedMarksIndex];
 
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Course Wise Marks')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <Text style={styles.sectionLabel}>Toggle Course to View Marks:</Text>
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Course Wise Marks')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <Text style={styles.sectionLabel}>Toggle Course to View Marks:</Text>
 
-            {/* Course Toggle Tabs */}
-            <View style={styles.tabsRow}>
-              {marksData.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={selectedMarksIndex === index ? styles.tabActive : styles.tabInactive}
-                  onPress={() => setSelectedMarksIndex(index)}
+          {/* Course Toggle Tabs */}
+          <View style={styles.tabsRow}>
+            {marksData.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={selectedMarksIndex === index ? styles.tabActive : styles.tabInactive}
+                onPress={() => setSelectedMarksIndex(index)}
+              >
+                <Text
+                  style={selectedMarksIndex === index ? styles.tabActiveText : styles.tabInactiveText}
                 >
-                  <Text
-                    style={selectedMarksIndex === index ? styles.tabActiveText : styles.tabInactiveText}
-                  >
-                    {item.course}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {item.course}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-            {/* Active Course Marks Table */}
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>{activeCourseMarks.course} Marks</Text>
+          {/* Active Course Marks Table */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>{activeCourseMarks.course} Marks</Text>
 
-              <View style={styles.table}>
-                <View style={styles.tableHeaderRow}>
-                  <Text style={styles.tableHeaderCellFlex}>Evaluation Component</Text>
-                  <Text style={styles.tableHeaderCellCenter}>Marks Obtained</Text>
-                </View>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellFlex}>Quizzes</Text>
-                  <Text style={styles.tableCellCenter}>{activeCourseMarks.quizzes}</Text>
-                </View>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellFlex}>Assignments</Text>
-                  <Text style={styles.tableCellCenter}>{activeCourseMarks.assignments}</Text>
-                </View>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellFlex}>Midterm Exam</Text>
-                  <Text style={styles.tableCellCenter}>{activeCourseMarks.midterm}</Text>
-                </View>
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCellFlex}>Final Exam</Text>
-                  <Text style={styles.tableCellCenter}>{activeCourseMarks.finalExam}</Text>
-                </View>
-                <View style={styles.tableRowTotal}>
-                  <Text style={styles.tableCellBoldFlex}>Total Marks</Text>
-                  <Text style={styles.tableCellBoldCenter}>{activeCourseMarks.total}</Text>
-                </View>
-                <View style={styles.tableRowTotal}>
-                  <Text style={styles.tableCellBoldFlex}>Grade</Text>
-                  <Text style={styles.gradeHighlight}>{activeCourseMarks.grade}</Text>
-                </View>
+            <View style={styles.table}>
+              <View style={styles.tableHeaderRow}>
+                <Text style={styles.tableHeaderCellFlex}>Evaluation Component</Text>
+                <Text style={styles.tableHeaderCellCenter}>Marks Obtained</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellFlex}>Quizzes</Text>
+                <Text style={styles.tableCellCenter}>{activeCourseMarks.quizzes}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellFlex}>Assignments</Text>
+                <Text style={styles.tableCellCenter}>{activeCourseMarks.assignments}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellFlex}>Midterm Exam</Text>
+                <Text style={styles.tableCellCenter}>{activeCourseMarks.midterm}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCellFlex}>Final Exam</Text>
+                <Text style={styles.tableCellCenter}>{activeCourseMarks.finalExam}</Text>
+              </View>
+              <View style={styles.tableRowTotal}>
+                <Text style={styles.tableCellBoldFlex}>Total Marks</Text>
+                <Text style={styles.tableCellBoldCenter}>{activeCourseMarks.total}</Text>
+              </View>
+              <View style={styles.tableRowTotal}>
+                <Text style={styles.tableCellBoldFlex}>Grade</Text>
+                <Text style={styles.gradeHighlight}>{activeCourseMarks.grade}</Text>
               </View>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+          </View>
+
+          {/* Marks Distribution Pie Chart (Out of 100) */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Marks Distribution (Pie Chart - Out of 100)</Text>
+            <Text style={styles.subText}>
+              Visual score breakdown for {activeCourseMarks.course}:
+            </Text>
+            <PieChart
+              data={[
+                {
+                  name: 'Obtained',
+                  marks: getObtainedMarksOutOf100(activeCourseMarks.total),
+                  color: '#16A34A',
+                  legendFontColor: '#1E293B',
+                  legendFontSize: 13,
+                },
+                {
+                  name: 'Remaining',
+                  marks: Math.max(0, 100 - getObtainedMarksOutOf100(activeCourseMarks.total)),
+                  color: '#CBD5E1',
+                  legendFontColor: '#64748B',
+                  legendFontSize: 13,
+                },
+              ]}
+              width={Math.max(280, Dimensions.get('window').width - 64)}
+              height={180}
+              chartConfig={{
+                backgroundGradientFrom: '#FFFFFF',
+                backgroundGradientTo: '#FFFFFF',
+                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(30, 41, 59, ${opacity})`,
+              }}
+              accessor="marks"
+              backgroundColor="transparent"
+              paddingLeft="15"
+              absolute={true}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 7. TRANSCRIPT (TABLE FORMAT)
   if (currentScreen === 'transcript') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Official Transcript')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.cgpaBanner}>
-              <Text style={styles.cgpaTitle}>Cumulative CGPA: {studentData.cgpa}</Text>
-              <Text style={styles.cgpaSub}>Program: {studentData.department}</Text>
-            </View>
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Official Transcript')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.cgpaBanner}>
+            <Text style={styles.cgpaTitle}>Cumulative CGPA: {studentData.cgpa}</Text>
+            <Text style={styles.cgpaSub}>Program: {studentData.department}</Text>
+          </View>
 
-            {transcriptData.map((sem, sIdx) => (
-              <View key={sIdx} style={styles.card}>
-                <View style={styles.semesterHeaderRow}>
-                  <Text style={styles.semesterTitle}>{sem.semester}</Text>
-                  <Text style={styles.semesterGpaBadge}>GPA: {sem.gpa}</Text>
-                </View>
-
-                {/* Table for Courses in Semester */}
-                <View style={styles.table}>
-                  <View style={styles.tableHeaderRow}>
-                    <Text style={styles.tableHeaderCellFlex}>Course Name</Text>
-                    <Text style={styles.tableHeaderCellCenter}>Grade</Text>
-                    <Text style={styles.tableHeaderCellCenter}>Points</Text>
-                  </View>
-                  {sem.courses.map((c, cIdx) => (
-                    <View key={cIdx} style={styles.tableRow}>
-                      <Text style={styles.tableCellFlex}>{c.name}</Text>
-                      <Text style={styles.tableCellBoldCenter}>{c.grade}</Text>
-                      <Text style={styles.tableCellCenter}>{c.points}</Text>
-                    </View>
-                  ))}
-                </View>
+          {transcriptData.map((sem, sIdx) => (
+            <View key={sIdx} style={styles.card}>
+              <View style={styles.semesterHeaderRow}>
+                <Text style={styles.semesterTitle}>{sem.semester}</Text>
+                <Text style={styles.semesterGpaBadge}>GPA: {sem.gpa}</Text>
               </View>
-            ))}
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+
+              {/* Table for Courses in Semester */}
+              <View style={styles.table}>
+                <View style={styles.tableHeaderRow}>
+                  <Text style={styles.tableHeaderCellFlex}>Course Name</Text>
+                  <Text style={styles.tableHeaderCellCenter}>Grade</Text>
+                  <Text style={styles.tableHeaderCellCenter}>Points</Text>
+                </View>
+                {sem.courses.map((c, cIdx) => (
+                  <View key={cIdx} style={styles.tableRow}>
+                    <Text style={styles.tableCellFlex}>{c.name}</Text>
+                    <Text style={styles.tableCellBoldCenter}>{c.grade}</Text>
+                    <Text style={styles.tableCellCenter}>{c.points}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 8. FEE CHALLAN / DETAILS
   if (currentScreen === 'fee') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Fee Challan')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Student Fee Voucher</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Challan Number: </Text>{feeData.challanNo}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Due Date: </Text>{feeData.dueDate}</Text>
-              <Text style={styles.infoLine}>
-                <Text style={styles.boldLabel}>Status: </Text>
-                <Text style={feeStatus === 'PAID' ? styles.statusPresent : styles.statusAbsent}>{feeStatus}</Text>
-              </Text>
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Fee Challan')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>Student Fee Voucher</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Challan Number: </Text>{feeData.challanNo}</Text>
+            <Text style={styles.infoLine}><Text style={styles.boldLabel}>Due Date: </Text>{feeData.dueDate}</Text>
+            <Text style={styles.infoLine}>
+              <Text style={styles.boldLabel}>Status: </Text>
+              <Text style={feeStatus === 'PAID' ? styles.statusPresent : styles.statusAbsent}>{feeStatus}</Text>
+            </Text>
 
-              <Text style={[styles.boldLabel, styles.topSpacing]}>Fee Particulars:</Text>
-              <View style={styles.table}>
-                <View style={styles.tableHeaderRow}>
-                  <Text style={styles.tableHeaderCellFlex}>Description</Text>
-                  <Text style={styles.tableHeaderCellCenter}>Amount</Text>
+            <Text style={[styles.boldLabel, styles.topSpacing]}>Fee Particulars:</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeaderRow}>
+                <Text style={styles.tableHeaderCellFlex}>Description</Text>
+                <Text style={styles.tableHeaderCellCenter}>Amount</Text>
+              </View>
+              {feeData.items.map((it, idx) => (
+                <View key={idx} style={styles.tableRow}>
+                  <Text style={styles.tableCellFlex}>{it.title}</Text>
+                  <Text style={styles.tableCellCenter}>Rs. {it.amount}</Text>
                 </View>
-                {feeData.items.map((it, idx) => (
-                  <View key={idx} style={styles.tableRow}>
-                    <Text style={styles.tableCellFlex}>{it.title}</Text>
-                    <Text style={styles.tableCellCenter}>Rs. {it.amount}</Text>
-                  </View>
-                ))}
-                <View style={styles.tableRowTotal}>
-                  <Text style={styles.tableCellBoldFlex}>Total Payable</Text>
-                  <Text style={styles.tableCellBoldCenter}>Rs. {feeData.totalAmount}</Text>
-                </View>
+              ))}
+              <View style={styles.tableRowTotal}>
+                <Text style={styles.tableCellBoldFlex}>Total Payable</Text>
+                <Text style={styles.tableCellBoldCenter}>Rs. {feeData.totalAmount}</Text>
               </View>
             </View>
+          </View>
 
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => setFeeStatus(feeStatus === 'PAID' ? 'UNPAID' : 'PAID')}
-            >
-              <Text style={styles.secondaryButtonText}>
-                Toggle Fee Status (Currently: {feeStatus})
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setFeeStatus(feeStatus === 'PAID' ? 'UNPAID' : 'PAID')}
+          >
+            <Text style={styles.secondaryButtonText}>
+              Toggle Fee Status (Currently: {feeStatus})
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   // 9. STUDENT / COURSE & TEACHER FEEDBACK
   if (currentScreen === 'feedback') {
-    const activeItem = feedback[feedbackCourseIndex];
+    // Only display courses the student is actually registered for
+    const registeredFeedback = feedback.filter((f) => registered.includes(f.course));
+    const safeIndex = feedbackCourseIndex >= registeredFeedback.length ? 0 : feedbackCourseIndex;
+    const activeItem = registeredFeedback[safeIndex];
 
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.mainContainer}>
-          {renderNavButtons('Course & Teacher Feedback')}
-          <ScrollView contentContainerStyle={styles.scrollPadding}>
-            <Text style={styles.sectionLabel}>Select Course:</Text>
-            <View style={styles.tabsRow}>
-              {feedback.map((f, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={feedbackCourseIndex === idx ? styles.tabActive : styles.tabInactive}
-                  onPress={() => setFeedbackCourseIndex(idx)}
-                >
-                  <Text
-                    style={feedbackCourseIndex === idx ? styles.tabActiveText : styles.tabInactiveText}
-                  >
-                    {f.course}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
+      <SafeAreaView style={styles.mainContainer}>
+        {renderNavButtons('Course & Teacher Feedback')}
+        <ScrollView contentContainerStyle={styles.scrollPadding}>
+          {registeredFeedback.length === 0 ? (
             <View style={styles.card}>
-              <Text style={styles.cardHeader}>{activeItem.course}</Text>
-              <Text style={styles.infoLine}><Text style={styles.boldLabel}>Instructor: </Text>{activeItem.instructor}</Text>
-
-              <Text style={[styles.boldLabel, styles.topSpacing]}>Teacher's Feedback to Class:</Text>
-              <Text style={styles.feedbackQuote}>"{activeItem.teacherFeedback}"</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Student Reviews (Anonymous - No Names)</Text>
-              {activeItem.studentReviews.map((rev, rIdx) => (
-                <View key={rIdx} style={styles.reviewRow}>
-                  <Text style={styles.anonymousAuthor}>
-                    • Anonymous Student ({rev.rating}/5 stars):
-                  </Text>
-                  <Text style={styles.reviewBodyText}>"{rev.comment}"</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardHeader}>Add Your Anonymous Review</Text>
-              <TextInput
-                style={styles.inputBox}
-                value={newReviewText}
-                onChangeText={setNewReviewText}
-                placeholder="Write your constructive review here..."
-              />
-              <TouchableOpacity style={styles.primaryButton} onPress={addStudentReview}>
-                <Text style={styles.primaryButtonText}>Submit Review</Text>
+              <Text style={styles.cardHeader}>No Registered Courses</Text>
+              <Text style={styles.infoLine}>
+                You have not registered for any courses yet. Please register in courses first to submit reviews.
+              </Text>
+              <TouchableOpacity
+                style={[styles.primaryButton, { marginTop: 12 }]}
+                onPress={() => setCurrentScreen('registration')}
+              >
+                <Text style={styles.primaryButtonText}>Go to Course Registration</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </SafeAreaProvider>
+          ) : (
+            <>
+              <Text style={styles.sectionLabel}>Select Your Registered Course:</Text>
+              <View style={styles.tabsRow}>
+                {registeredFeedback.map((f, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={safeIndex === idx ? styles.tabActive : styles.tabInactive}
+                    onPress={() => setFeedbackCourseIndex(idx)}
+                  >
+                    <Text
+                      style={safeIndex === idx ? styles.tabActiveText : styles.tabInactiveText}
+                    >
+                      {f.course}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.card}>
+                <View style={styles.courseHeaderRow}>
+                  <Text style={styles.cardHeader}>{activeItem.course}</Text>
+                  <Text style={styles.badgeEnrolled}>Enrolled</Text>
+                </View>
+                <Text style={styles.infoLine}>
+                  <Text style={styles.boldLabel}>Instructor: </Text>
+                  {activeItem.instructor}
+                </Text>
+
+                <Text style={[styles.boldLabel, styles.topSpacing]}>Teacher's Feedback to Class:</Text>
+                <Text style={styles.feedbackQuote}>"{activeItem.teacherFeedback}"</Text>
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.cardHeader}>Student Reviews (Anonymous - No Names)</Text>
+                {activeItem.studentReviews.map((rev, rIdx) => (
+                  <View key={rIdx} style={styles.reviewRow}>
+                    <Text style={styles.anonymousAuthor}>
+                      • Anonymous Student ({rev.rating}/5 stars):
+                    </Text>
+                    <Text style={styles.reviewBodyText}>"{rev.comment}"</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.cardHeader}>Add Your Anonymous Review</Text>
+                <Text style={styles.subText}>
+                  Write and submit your constructive anonymous review for {activeItem.course}:
+                </Text>
+                <TextInput
+                  style={styles.inputBox}
+                  value={newReviewText}
+                  onChangeText={setNewReviewText}
+                  placeholder="Write your review here..."
+                />
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={() => {
+                    if (!newReviewText.trim()) {
+                      Alert.alert('Error', 'Please enter your review text');
+                      return;
+                    }
+                    const updated = [...feedback];
+                    const fullListIndex = updated.findIndex((item) => item.course === activeItem.course);
+                    if (fullListIndex !== -1) {
+                      updated[fullListIndex].studentReviews.push({
+                        comment: newReviewText,
+                        rating: 5,
+                      });
+                      setFeedback(updated);
+                      setNewReviewText('');
+                      Alert.alert('Success', 'Anonymous review submitted!');
+                    }
+                  }}
+                >
+                  <Text style={styles.primaryButtonText}>Submit Review</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -901,6 +1191,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#F1F5F9',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0,
   },
   scrollPadding: {
     padding: 16,
@@ -1388,5 +1679,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
+  },
+  badgeEnrolled: {
+    backgroundColor: '#DCFCE7',
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  badgeNotEnrolled: {
+    backgroundColor: '#FEE2E2',
+    color: '#B91C1C',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  chartLegendSummary: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 6,
+    padding: 10,
+    marginTop: 10,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  chartSummaryText: {
+    fontSize: 13,
+    color: '#1E293B',
+    marginBottom: 3,
+  },
+  chartSummarySub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
   },
 });
