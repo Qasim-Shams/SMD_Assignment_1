@@ -1,33 +1,33 @@
-# EnhancedFlex — Student Academic Portal
+# EnhancedFlex - Student Academic Portal
 
-A comprehensive, modern Student Portal mobile application built with **React Native** and **TypeScript** for the Mobile Application Development (SMD) assignment.
-
----
-
-## 📌 Project Overview
-
-**EnhancedFlex** modernizes the university student portal experience. It gives students full control over their academic life—from personalized dashboards and dynamic course registration to real-time attendance monitoring with smart academic alerts, comprehensive marks analysis, semester transcripts, fee vouchers, and peer-to-peer course reviews.
+A comprehensive Student Portal mobile application built with **React Native** and **TypeScript** for the Mobile Application Development (SMD) assignment.
 
 ---
 
-## ✨ Key Features & Innovations
+## Project Overview
 
-### 1. 📊 Interactive Visual Analytics (`react-native-chart-kit`)
+**EnhancedFlex** modernizes the university student portal experience. It gives students full control over their academic life—from personalized dashboards and dynamic course registration to real-time attendance monitoring with academic alerts, comprehensive marks analysis, semester transcripts, fee vouchers, and peer-to-peer course reviews.
+
+---
+
+## Key Features and Innovations
+
+### 1. Interactive Visual Analytics (react-native-chart-kit)
 * **Marks Distribution Pie Chart (Out of 100)**: Visualizes marks obtained versus remaining marks for any selected course. Includes interactive course toggle tabs and a detailed score breakdown (Quizzes, Assignments, Midterms, and Final Exam).
 * **Attendance Comparison Bar Chart**: Highlights percentage of attendance across all enrolled courses relative to the university's 75% examination eligibility requirement.
-* **Attendance Progress Rings (`ProgressChart`)**: Multi-ring progress visualization representing semester-long class attendance completion towards 100%.
-* **Cross-Screen Integration**: Charts are embedded in both the **Academic Dashboard**, the **Attendance Monitoring** screen, and the **Course Wise Marks** screen.
+* **Attendance Progress Rings (ProgressChart)**: Multi-ring progress visualization representing semester-long class attendance completion towards 100%.
+* **Cross-Screen Integration**: Charts are embedded in the **Academic Dashboard**, the **Attendance Monitoring** screen, and the **Course Wise Marks** screen.
 
-### 2. 📝 Peer Reviews During Course Registration
+### 2. Peer Reviews During Course Registration
 * **Informed Decision Making**: Students can expand and read instructor guidelines and genuine, anonymous student reviews directly within the **Course Registration** screen before committing to an enrollment.
 * **Strict Review Governance**: On the **Course & Teacher Feedback** screen, students can **only write reviews for courses they are currently registered for**. Unregistered courses are hidden from the review submission list to prevent unqualified reviews.
 
-### 3. 🚨 Leave-Based Attendance Monitoring & Debarment Alert
+### 3. Leave-Based Attendance Monitoring and Debarment Alert
 * **Leaves Counter**: Rather than just displaying an abstract percentage, the system actively calculates and shows how many leaves the student has used out of the allowed limit (e.g. *"You have used 3 out of 6 leaves. You have 3 leaves remaining"*).
 * **Automatic Debarment Notification**: If absences exceed the 6-leave limit, a prominent **DEBARRED ALERT** is triggered, warning the student that they are barred from the examination for that course.
 * **Interactive Class Simulation**: Students can simulate recording new classes as *Present* or *Absent*, with dynamic recalculation of attendance history, percentage, and leaves in real-time.
 
-### 4. 📚 Academic Management Suite
+### 4. Academic Management Suite
 * **Student Academic Dashboard**: Quick access to roll number, department, semester, CGPA, SGPA, and registered course summaries alongside visual analytics.
 * **Course Registration with Elective Rules**: Enforces mandatory academic rules:
   * *Software Mobile Development* OR *Game Dev* (Choose 1 out of 2)
@@ -40,7 +40,7 @@ A comprehensive, modern Student Portal mobile application built with **React Nat
 
 ---
 
-## 📸 Screenshots Gallery
+## Screenshots Gallery
 
 | Screen | Description | Screenshot |
 | :--- | :--- | :---: |
@@ -60,7 +60,7 @@ A comprehensive, modern Student Portal mobile application built with **React Nat
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## Tech Stack and Dependencies
 
 * **Framework**: React Native `0.87.1` (React `19.2.3`)
 * **Language**: TypeScript (`^6.0.3`)
@@ -70,7 +70,7 @@ A comprehensive, modern Student Portal mobile application built with **React Nat
 
 ---
 
-## 🚀 How to Build and Run the App
+## How to Build and Run the App
 
 ### Prerequisites
 1. **Node.js** (>= 22.11.0 recommended)
@@ -122,7 +122,7 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
-## 🧪 Testing
+## Testing
 
 To execute automated tests:
 ```bash
